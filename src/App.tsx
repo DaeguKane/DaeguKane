@@ -34,25 +34,36 @@ export default function App() {
         body: JSON.stringify(specs),
       });
 
-      const contentType = response.headers.get('content-type') || '';
-      
-      // If response is HTML or not OK (e.g. static site hosting where /api routes serve index.html), use Fallback Engine
-      if (!contentType.includes('application/json') || !response.ok) {
-        console.warn('Backend server API not found or returned non-JSON. Switching to Client Scouting Engine.');
-        // Simulate realistic analysis delay (1.8s) for smooth UX
-        await new Promise((resolve) => setTimeout(resolve, 1800));
+      // Safely read response text first
+      const responseText = await response.text();
+      const trimmedText = responseText.trim();
+
+      // Check if response is HTML or not OK (e.g. static Netlify host serving index.html for /api routes)
+      if (!response.ok || trimmedText.startsWith('<') || trimmedText.toLowerCase().includes('<!doctype')) {
+        console.warn('Backend server API not found or returned HTML (e.g. static deployment). Switching to Client Scouting Engine.');
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         const fallbackData = generateFallbackReport(specs);
         setReportResult(fallbackData);
         setViewState('report');
         return;
       }
 
-      const data: SpecAnalysisReport = await response.json();
-      setReportResult(data);
-      setViewState('report');
+      // Safe JSON Parse
+      try {
+        const data: SpecAnalysisReport = JSON.parse(trimmedText);
+        setReportResult(data);
+        setViewState('report');
+      } catch (parseError) {
+        console.warn('Response is not valid JSON. Switching to Client Scouting Engine:', parseError);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const fallbackData = generateFallbackReport(specs);
+        setReportResult(fallbackData);
+        setViewState('report');
+      }
     } catch (err: any) {
       console.warn('Spec Analysis server request failed. Using fallback scouter:', err);
       // Fallback scouting report if network or backend fails
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       const fallbackData = generateFallbackReport(specs);
       setReportResult(fallbackData);
       setViewState('report');
