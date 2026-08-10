@@ -116,10 +116,21 @@ export default function App() {
 
         {viewState === 'analyzing' && <AnalyzingScreen />}
 
-        {viewState === 'report' && reportResult && currentUserSpecs && (
+        {viewState === 'report' && reportResult && (
           <ReportDashboard
             report={reportResult}
-            userSpecs={currentUserSpecs}
+            userSpecs={
+              currentUserSpecs || {
+                name: '지원자',
+                universityCategory: '대학교',
+                major: '전공',
+                gpa: '3.5 / 4.5',
+                languageScore: '기본 어학',
+                certificates: [],
+                experiencePeriod: '신입',
+                coverLetterAndExperience: '',
+              }
+            }
             onReset={handleReset}
           />
         )}
