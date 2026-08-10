@@ -1,0 +1,6 @@
+{
+  "name": "SpecLens (스펙렌즈) - 삼성 라이온즈 스타일 AI 취업 스펙 스카우팅 리포트",
+  "description": "10년 차 대기업 & 글로벌 기업 전문 헤드헌터 AI가 분석하는 삼성 라이온즈 스타일 역동적 취업 경쟁력 진단 및 직무 매칭 서비스",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

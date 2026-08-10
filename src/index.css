@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@layer utilities {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.35s ease-out forwards;
+  }
+
+  @keyframes floatBall {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(180deg); }
+  }
+
+  @keyframes pitchFastball {
+    0% { transform: translate(-100px, 50px) scale(0.3); opacity: 0; }
+    30% { opacity: 0.8; }
+    100% { transform: translate(300px, -200px) scale(1.2); opacity: 0; }
+  }
+
+  @keyframes lightBeam {
+    0%, 100% { opacity: 0.15; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(1.08); }
+  }
+
+  .animate-floatBall {
+    animation: floatBall 6s ease-in-out infinite;
+  }
+
+  .animate-pitchFastball {
+    animation: pitchFastball 4s ease-out infinite;
+  }
+
+  .animate-lightBeam {
+    animation: lightBeam 5s ease-in-out infinite;
+  }
+
+  .skew-tag {
+    transform: skewX(-12deg);
+    font-style: italic;
+    font-weight: 900;
+  }
+
+  .skew-button {
+    transform: skewX(-10deg);
+    transition: all 0.2s ease-in-out;
+  }
+
+  .skew-button:hover {
+    filter: brightness(1.15);
+  }
+
+  .card-scout {
+    background-color: #0E244B;
+    border-top: 4px solid #0066FF;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Custom scrollbar for dark stadium aesthetic */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #081836;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0066FF;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0066ff;
+}
+
