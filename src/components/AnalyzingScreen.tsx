@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Trophy, Zap, Activity, Database, Sparkles, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Trophy, Zap, Activity, Database, Sparkles, CheckCircle2 } from 'lucide-react';
 
-export const AnalyzingScreen: React.FC = () => {
-  const [progress, setProgress] = useState(10);
+interface AnalyzingScreenProps {
+  onComplete?: () => void;
+}
+
+export const AnalyzingScreen: React.FC<AnalyzingScreenProps> = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
   const [currentMessageIdx, setCurrentMessageIdx] = useState(0);
 
   const messages = [
@@ -14,27 +18,37 @@ export const AnalyzingScreen: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Progress interval animation
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 95) {
-          clearInterval(interval);
-          return 95;
-        }
-        return prev + Math.floor(Math.random() * 8) + 4;
-      });
-    }, 400);
+    // Progress gauge timer: smooth progress from 0% to 100% over ~3.2 seconds
+    const startTime = Date.now();
+    const duration = 3200; // 3.2 seconds total
+
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const calculatedProgress = Math.min(100, Math.floor((elapsed / duration) * 100));
+
+      setProgress(calculatedProgress);
+
+      if (calculatedProgress >= 100) {
+        clearInterval(progressInterval);
+        // Small delay at 100% before triggering transition
+        setTimeout(() => {
+          if (onComplete) {
+            onComplete();
+          }
+        }, 400);
+      }
+    }, 40);
 
     // Message ticker interval
     const msgInterval = setInterval(() => {
       setCurrentMessageIdx((prev) => (prev + 1) % messages.length);
-    }, 1800);
+    }, 700);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(progressInterval);
       clearInterval(msgInterval);
     };
-  }, []);
+  }, [onComplete]);
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
@@ -79,7 +93,7 @@ export const AnalyzingScreen: React.FC = () => {
 
           <div className="h-4 bg-[#071329] rounded-full p-1 border border-blue-500/40 overflow-hidden shadow-inner">
             <div
-              className="h-full bg-gradient-to-r from-[#0052A5] via-[#0066FF] to-amber-400 rounded-full transition-all duration-300 relative"
+              className="h-full bg-gradient-to-r from-[#0052A5] via-[#0066FF] to-amber-400 rounded-full transition-all duration-100 relative"
               style={{ width: `${progress}%` }}
             >
               <div className="absolute inset-0 bg-white/20 animate-pulse" />
