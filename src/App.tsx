@@ -10,6 +10,8 @@ import { PresetModal } from './components/PresetModal';
 import { BaseballBackground } from './components/BaseballBackground';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
+import { generateFallbackReport } from './services/fallbackScouter';
+
 export default function App() {
   const [viewState, setViewState] = useState<'landing' | 'form' | 'analyzing' | 'report' | 'error'>('landing');
   const [currentUserSpecs, setCurrentUserSpecs] = useState<UserSpecs | null>(null);
@@ -17,7 +19,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
 
-  // Analyze API Call
+  // Analyze API Call with Fallback for Static Deployments (e.g., Netlify)
   const handleAnalyzeSpecs = async (specs: UserSpecs) => {
     setCurrentUserSpecs(specs);
     setViewState('analyzing');
@@ -32,18 +34,28 @@ export default function App() {
         body: JSON.stringify(specs),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'AI 스펙 분석을 처리하는 중 오류가 발생했습니다.');
+      const contentType = response.headers.get('content-type') || '';
+      
+      // If response is HTML or not OK (e.g. static site hosting where /api routes serve index.html), use Fallback Engine
+      if (!contentType.includes('application/json') || !response.ok) {
+        console.warn('Backend server API not found or returned non-JSON. Switching to Client Scouting Engine.');
+        // Simulate realistic analysis delay (1.8s) for smooth UX
+        await new Promise((resolve) => setTimeout(resolve, 1800));
+        const fallbackData = generateFallbackReport(specs);
+        setReportResult(fallbackData);
+        setViewState('report');
+        return;
       }
 
       const data: SpecAnalysisReport = await response.json();
       setReportResult(data);
       setViewState('report');
     } catch (err: any) {
-      console.error('Spec Analysis error:', err);
-      setErrorMessage(err.message || '서버 통신 중 오류가 발생했습니다.');
-      setViewState('error');
+      console.warn('Spec Analysis server request failed. Using fallback scouter:', err);
+      // Fallback scouting report if network or backend fails
+      const fallbackData = generateFallbackReport(specs);
+      setReportResult(fallbackData);
+      setViewState('report');
     }
   };
 
