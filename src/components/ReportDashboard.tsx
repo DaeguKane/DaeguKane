@@ -9,7 +9,6 @@ import {
   CheckSquare, 
   Square, 
   Share2, 
-  Download, 
   Copy, 
   RotateCcw, 
   Sparkles, 
@@ -21,7 +20,6 @@ import {
   CheckCircle2, 
   AlertTriangle,
   Lightbulb,
-  ExternalLink,
   Printer
 } from 'lucide-react';
 
@@ -53,7 +51,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
         colors: ['#0052A5', '#FFC700', '#00E5FF', '#FFFFFF']
       });
     } catch (e) {
-      // ignore
+      // ignore confetti error
     }
   }, []);
 
@@ -66,21 +64,29 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2500);
+    try {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch (e) {
+      // ignore
+    }
   };
 
   const handleCopySummary = () => {
-    const text = `[SPECLENS 취업 스펙 분석 결과]
-- 지원자: ${userSpecs.name}
-- 종합 티어: ${report.overall_summary.tier}
-- 헤드헌터 총평: ${report.overall_summary.one_line_eval}
-- 추천 직무 TOP 1: ${report.recommended_jobs[0]?.job_title || ''} (${report.recommended_jobs[0]?.match_score}% 매칭)
+    try {
+      const text = `[SPECLENS 취업 스펙 분석 결과]
+- 지원자: ${userSpecs?.name || '지원자'}
+- 종합 티어: ${report?.overall_summary?.tier || '진단 완료'}
+- 헤드헌터 총평: ${report?.overall_summary?.one_line_eval || ''}
+- 추천 직무 TOP 1: ${report?.recommended_jobs?.[0]?.job_title || ''} (${report?.recommended_jobs?.[0]?.match_score || 0}% 매칭)
 - 상세 보기: ${window.location.href}`;
-    navigator.clipboard.writeText(text);
-    setCopiedSummary(true);
-    setTimeout(() => setCopiedSummary(false), 2500);
+      navigator.clipboard.writeText(text);
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 2500);
+    } catch (e) {
+      // ignore
+    }
   };
 
   const handlePrintPdf = () => {
@@ -88,7 +94,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
   };
 
   // Status color helper for competitiveness items
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case '우수':
         return (
@@ -113,6 +119,36 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
           </span>
         );
     }
+  };
+
+  const overall = report?.overall_summary || {
+    tier: 'Silver 1',
+    one_line_eval: '스펙 종합 분석이 완료되었습니다.',
+    top_strengths: [],
+    top_weaknesses: []
+  };
+
+  const recommendedJobs = report?.recommended_jobs || [];
+  const breakdown = report?.competitiveness_breakdown || {
+    gpa: { status: '적정', comment: '학점 정보가 반영되었습니다.' },
+    language: { status: '부족', comment: '어학 성적 반영되었습니다.' },
+    experience: { status: '적정', comment: '직무 경험 반영되었습니다.' },
+    certificate: { status: '적정', comment: '자격증 정보 반영되었습니다.' }
+  };
+  const swot = report?.swot_analysis || {
+    strengths: [],
+    weaknesses: [],
+    opportunities: [],
+    threats: []
+  };
+  const storytelling = report?.storytelling_guide || {
+    title: '자소서 & 경험 스토리텔링 개편 가이드',
+    before_after: [],
+    headhunter_secret: '자소서 내 정량적 성과 수치 작성이 합격의 열쇠입니다.'
+  };
+  const actionPlan = report?.action_plan || {
+    short_term: [],
+    long_term: []
   };
 
   return (
@@ -144,7 +180,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
             SCOUTING REPORT GENERATED
           </span>
           <span className="text-slate-400 text-xs">|</span>
-          <span className="text-xs text-slate-200 font-bold">{userSpecs.name} 지원자 리포트</span>
+          <span className="text-xs text-slate-200 font-bold">{userSpecs?.name || '지원자'} 리포트</span>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -198,17 +234,19 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
               <span className="bg-amber-400 text-slate-950 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md">
                 10TH YEAR HEADHUNTER REPORT
               </span>
-              <span className="bg-blue-900/80 text-cyan-300 border border-cyan-400/30 text-xs font-bold px-3 py-1 rounded-full">
-                {userSpecs.major}
-              </span>
+              {userSpecs?.major && (
+                <span className="bg-blue-900/80 text-cyan-300 border border-cyan-400/30 text-xs font-bold px-3 py-1 rounded-full">
+                  {userSpecs.major}
+                </span>
+              )}
             </div>
 
             <div className="flex items-baseline gap-3">
               <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight italic">
-                {userSpecs.name} <span className="text-slate-300 text-xl font-medium not-italic">지원자</span>
+                {userSpecs?.name || '지원자'} <span className="text-slate-300 text-xl font-medium not-italic">지원자</span>
               </h1>
               <span className="text-sm text-cyan-300 font-bold">
-                {userSpecs.targetIndustry || 'IT/콘텐츠'} · {userSpecs.targetJob || '서비스기획'}
+                {userSpecs?.targetIndustry || '희망 산업'} · {userSpecs?.targetJob || '희망 직무'}
               </span>
             </div>
 
@@ -219,7 +257,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 헤드헌터 한 줄 총평
               </p>
               <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
-                "{report.overall_summary.one_line_eval}"
+                "{overall.one_line_eval}"
               </p>
             </div>
 
@@ -230,7 +268,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                   <Flame className="w-3.5 h-3.5 text-cyan-400" /> 핵심 강점 (STRENGTHS)
                 </span>
                 <ul className="space-y-1">
-                  {report.overall_summary.top_strengths.map((str, idx) => (
+                  {(overall.top_strengths || []).map((str, idx) => (
                     <li key={idx} className="text-xs text-slate-200 font-medium flex items-start gap-1.5">
                       <span className="text-cyan-400 font-bold">•</span>
                       <span>{str}</span>
@@ -244,7 +282,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> 핵심 보완점 (GAPS)
                 </span>
                 <ul className="space-y-1">
-                  {report.overall_summary.top_weaknesses.map((weak, idx) => (
+                  {(overall.top_weaknesses || []).map((weak, idx) => (
                     <li key={idx} className="text-xs text-slate-200 font-medium flex items-start gap-1.5">
                       <span className="text-amber-400 font-bold">•</span>
                       <span>{weak}</span>
@@ -255,7 +293,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
             </div>
           </div>
 
-          {/* Large Tier MVP Badge in Vibrant Skewed Style */}
+          {/* Large Tier MVP Badge */}
           <div className="w-full lg:w-72 bg-[#071329] border-t-4 border-[#074CA1] border-x border-b border-amber-400/80 rounded-2xl p-6 text-center shadow-2xl relative flex flex-col items-center justify-center min-h-[230px]">
             <div className="absolute -top-3 bg-white text-[#074CA1] text-[10px] font-black px-3 py-0.5 skew-x-[-15deg] italic uppercase tracking-widest shadow-md">
               REALISTIC MARKET TIER
@@ -265,8 +303,8 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
               <Trophy className="w-10 h-10 fill-current" />
             </div>
 
-            <h3 className="text-4xl sm:text-5xl font-black text-amber-300 tracking-tight italic skew-x-[-10deg]">
-              {report.overall_summary.tier}
+            <h3 className="text-3xl sm:text-4xl font-black text-amber-300 tracking-tight italic skew-x-[-10deg]">
+              {overall.tier}
             </h3>
 
             <p className="text-xs text-blue-200 mt-2 font-bold">
@@ -274,75 +312,77 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
             </p>
 
             <span className="mt-3 text-[11px] bg-white text-[#074CA1] px-3 py-1 font-black skew-x-[-10deg] italic uppercase">
-              ★ MARKET POSITION: TOP MATCH
+              ★ MARKET POSITION
             </span>
           </div>
         </div>
       </div>
 
       {/* SECTION 1: TOP 3 Recommended Jobs Target Map */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="w-6 h-6 text-amber-400" />
-            <h2 className="text-xl sm:text-2xl font-black text-white">
-              F3. AI 추천 직무 타깃팅 맵 (TOP 3)
-            </h2>
-          </div>
-          <span className="text-xs text-blue-200 font-semibold">
-            스펙 & 경험 기반 최적 직무 매칭
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {report.recommended_jobs.map((job) => (
-            <div
-              key={job.rank}
-              className="print-card bg-[#0A1833] border-2 border-[#0052A5] hover:border-cyan-400 rounded-2xl p-6 shadow-xl transition-all hover:-translate-y-1 relative flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${
-                    job.rank === 1
-                      ? 'bg-amber-400 text-slate-950'
-                      : job.rank === 2
-                      ? 'bg-cyan-400 text-slate-950'
-                      : 'bg-blue-600 text-white'
-                  }`}>
-                    DRAFT #{job.rank}
-                  </span>
-                  <span className="text-xs font-bold text-slate-400">{job.industry}</span>
-                </div>
-
-                <h3 className="text-xl font-extrabold text-white mb-3">{job.job_title}</h3>
-
-                {/* Match Score Meter */}
-                <div className="bg-[#071329] p-3 rounded-xl border border-blue-900 mb-4">
-                  <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-                    <span className="text-slate-300">직무 적합도 MATCH</span>
-                    <span className="text-amber-300 font-black text-sm">{job.match_score}%</span>
-                  </div>
-                  <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
-                    <div
-                      className="h-full bg-gradient-to-r from-[#0052A5] via-cyan-400 to-amber-400 rounded-full"
-                      style={{ width: `${job.match_score}%` }}
-                    />
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                  {job.reason}
-                </p>
-              </div>
-
-              <div className="mt-6 pt-3 border-t border-blue-900/60 flex items-center justify-between text-[11px] text-cyan-300 font-bold">
-                <span>추천 지원 우선순위</span>
-                <span>★ TOP MATCH</span>
-              </div>
+      {recommendedJobs.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Target className="w-6 h-6 text-amber-400" />
+              <h2 className="text-xl sm:text-2xl font-black text-white">
+                AI 추천 직무 타깃팅 맵 (TOP {recommendedJobs.length})
+              </h2>
             </div>
-          ))}
+            <span className="text-xs text-blue-200 font-semibold">
+              스펙 & 경험 기반 최적 직무 매칭
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {recommendedJobs.map((job) => (
+              <div
+                key={job.rank}
+                className="print-card bg-[#0A1833] border-2 border-[#0052A5] hover:border-cyan-400 rounded-2xl p-6 shadow-xl transition-all hover:-translate-y-1 relative flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${
+                      job.rank === 1
+                        ? 'bg-amber-400 text-slate-950'
+                        : job.rank === 2
+                        ? 'bg-cyan-400 text-slate-950'
+                        : 'bg-blue-600 text-white'
+                    }`}>
+                      DRAFT #{job.rank}
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">{job.industry}</span>
+                  </div>
+
+                  <h3 className="text-xl font-extrabold text-white mb-3">{job.job_title}</h3>
+
+                  {/* Match Score Meter */}
+                  <div className="bg-[#071329] p-3 rounded-xl border border-blue-900 mb-4">
+                    <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                      <span className="text-slate-300">직무 적합도 MATCH</span>
+                      <span className="text-amber-300 font-black text-sm">{job.match_score}%</span>
+                    </div>
+                    <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#0052A5] via-cyan-400 to-amber-400 rounded-full"
+                        style={{ width: `${job.match_score}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                    {job.reason}
+                  </p>
+                </div>
+
+                <div className="mt-6 pt-3 border-t border-blue-900/60 flex items-center justify-between text-[11px] text-cyan-300 font-bold">
+                  <span>추천 지원 우선순위</span>
+                  <span>★ TOP MATCH</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* SECTION 2: 4-Factor Competitiveness Breakdown */}
       <div className="print-card bg-[#0A1833] border-t-4 border-[#074CA1] border-x border-b border-blue-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
@@ -366,10 +406,10 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 <span className="w-2 h-2 rounded-full bg-blue-400" />
                 학점 (GPA)
               </span>
-              {getStatusBadge(report.competitiveness_breakdown.gpa.status)}
+              {getStatusBadge(breakdown.gpa?.status)}
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              {report.competitiveness_breakdown.gpa.comment}
+              {breakdown.gpa?.comment || '학점 진단 결과'}
             </p>
           </div>
 
@@ -380,10 +420,10 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 <span className="w-2 h-2 rounded-full bg-cyan-400" />
                 어학 성적 (Language)
               </span>
-              {getStatusBadge(report.competitiveness_breakdown.language.status)}
+              {getStatusBadge(breakdown.language?.status)}
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              {report.competitiveness_breakdown.language.comment}
+              {breakdown.language?.comment || '어학 성적 진단 결과'}
             </p>
           </div>
 
@@ -394,10 +434,10 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 <span className="w-2 h-2 rounded-full bg-amber-400" />
                 직무 경험 (Experience)
               </span>
-              {getStatusBadge(report.competitiveness_breakdown.experience.status)}
+              {getStatusBadge(breakdown.experience?.status)}
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              {report.competitiveness_breakdown.experience.comment}
+              {breakdown.experience?.comment || '직무 경험 진단 결과'}
             </p>
           </div>
 
@@ -408,17 +448,17 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
                 자격증 (Certificate)
               </span>
-              {getStatusBadge(report.competitiveness_breakdown.certificate.status)}
+              {getStatusBadge(breakdown.certificate?.status)}
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              {report.competitiveness_breakdown.certificate.comment}
+              {breakdown.certificate?.comment || '자격증 진단 결과'}
             </p>
           </div>
         </div>
       </div>
 
       {/* SECTION 3: SWOT Analysis Matrix */}
-      {report.swot_analysis && (
+      {swot && (
         <div className="print-card bg-[#0A1833] border-2 border-[#0052A5] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="flex items-center justify-between border-b border-blue-800/60 pb-4">
             <div className="flex items-center gap-2">
@@ -439,7 +479,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 <span>[S] STRENGTHS (강점)</span>
               </h4>
               <ul className="space-y-1.5 text-xs text-slate-200">
-                {report.swot_analysis.strengths.map((s, idx) => (
+                {(swot.strengths || []).map((s, idx) => (
                   <li key={idx} className="flex items-start gap-1.5">
                     <span className="text-cyan-400 font-bold">•</span>
                     <span>{s}</span>
@@ -454,7 +494,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 <span>[W] WEAKNESSES (약점)</span>
               </h4>
               <ul className="space-y-1.5 text-xs text-slate-200">
-                {report.swot_analysis.weaknesses.map((w, idx) => (
+                {(swot.weaknesses || []).map((w, idx) => (
                   <li key={idx} className="flex items-start gap-1.5">
                     <span className="text-amber-400 font-bold">•</span>
                     <span>{w}</span>
@@ -469,7 +509,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 <span>[O] OPPORTUNITIES (기회)</span>
               </h4>
               <ul className="space-y-1.5 text-xs text-slate-200">
-                {report.swot_analysis.opportunities.map((o, idx) => (
+                {(swot.opportunities || []).map((o, idx) => (
                   <li key={idx} className="flex items-start gap-1.5">
                     <span className="text-emerald-400 font-bold">•</span>
                     <span>{o}</span>
@@ -484,7 +524,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 <span>[T] THREATS (위협)</span>
               </h4>
               <ul className="space-y-1.5 text-xs text-slate-200">
-                {report.swot_analysis.threats.map((t, idx) => (
+                {(swot.threats || []).map((t, idx) => (
                   <li key={idx} className="flex items-start gap-1.5">
                     <span className="text-rose-400 font-bold">•</span>
                     <span>{t}</span>
@@ -497,13 +537,13 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
       )}
 
       {/* SECTION 4: Storytelling Guide (Before -> After) */}
-      {report.storytelling_guide && (
+      {storytelling && (
         <div className="print-card bg-[#0A1833] border-2 border-[#0052A5] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="flex items-center justify-between border-b border-blue-800/60 pb-4">
             <div className="flex items-center gap-2">
               <FileEdit className="w-6 h-6 text-cyan-400" />
               <h2 className="text-xl sm:text-2xl font-black text-white">
-                {report.storytelling_guide.title || '자소서 & 경험 스토리텔링 개편 가이드'}
+                {storytelling.title || '자소서 & 경험 스토리텔링 개편 가이드'}
               </h2>
             </div>
             <span className="text-xs bg-cyan-900/80 text-cyan-300 px-3 py-1 rounded-full font-bold">
@@ -513,7 +553,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
 
           {/* Before -> After Blocks */}
           <div className="space-y-6">
-            {report.storytelling_guide.before_after.map((item, idx) => (
+            {(storytelling.before_after || []).map((item, idx) => (
               <div key={idx} className="bg-[#071329] rounded-2xl p-5 border border-blue-500/30 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* BEFORE */}
@@ -554,14 +594,14 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
                 10년 차 헤드헌터의 서류 통과 비밀 전략
               </h4>
               <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
-                {report.storytelling_guide.headhunter_secret}
+                {storytelling.headhunter_secret}
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* SECTION 5: Action Plan Checklist (1-Month & 3-Month Roadmap) */}
+      {/* SECTION 5: Action Plan Checklist */}
       <div className="print-card bg-[#0A1833] border-2 border-[#0052A5] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
         <div className="flex items-center justify-between border-b border-blue-800/60 pb-4">
           <div className="flex items-center gap-2">
@@ -576,7 +616,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Short Term (1 Month) */}
+          {/* Short Term */}
           <div className="bg-[#071329] p-5 rounded-2xl border border-blue-500/30 space-y-4">
             <div className="flex items-center justify-between border-b border-blue-900 pb-2">
               <h3 className="text-sm font-black text-cyan-300 flex items-center gap-1.5">
@@ -587,7 +627,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
             </div>
 
             <div className="space-y-2.5">
-              {report.action_plan.short_term.map((task, idx) => (
+              {(actionPlan.short_term || []).map((task, idx) => (
                 <button
                   key={idx}
                   onClick={() => toggleShortTerm(idx)}
@@ -608,7 +648,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
             </div>
           </div>
 
-          {/* Long Term (3 Month) */}
+          {/* Long Term */}
           <div className="bg-[#071329] p-5 rounded-2xl border border-blue-500/30 space-y-4">
             <div className="flex items-center justify-between border-b border-blue-900 pb-2">
               <h3 className="text-sm font-black text-amber-300 flex items-center gap-1.5">
@@ -619,7 +659,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({
             </div>
 
             <div className="space-y-2.5">
-              {report.action_plan.long_term.map((task, idx) => (
+              {(actionPlan.long_term || []).map((task, idx) => (
                 <button
                   key={idx}
                   onClick={() => toggleLongTerm(idx)}
